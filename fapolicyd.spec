@@ -7,21 +7,21 @@
 Summary:	Application allow listing daemon
 Summary(pl.UTF-8):	Demon do obsługi listy dozwolonych aplikacji
 Name:		fapolicyd
-Version:	1.1.4
+Version:	1.3.3
 Release:	0.1
 License:	GPL v2+
 Group:		Daemons
 Source0:	https://people.redhat.com/sgrubb/fapolicyd/%{name}-%{version}.tar.gz
-# Source0-md5:	3c69b4dba81eb0459de12a6a6435c951
+# Source0-md5:	072f3e281662838f608b3da6e1061a9e
 Patch0:		%{name}-ldso.patch
 URL:		https://people.redhat.com/sgrubb/fapolicyd/
-BuildRequires:	autoconf >= 2.50
+BuildRequires:	autoconf >= 2.60
 BuildRequires:	automake
 BuildRequires:	file
 BuildRequires:	libcap-ng-devel
 BuildRequires:	libmagic-devel
 BuildRequires:	libseccomp-devel
-BuildRequires:	libtool
+BuildRequires:	libtool >= 2:2
 BuildRequires:	linux-libc-headers >= 7:4.20
 BuildRequires:	lmdb-devel
 BuildRequires:	openssl-devel
@@ -72,6 +72,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %{__mv} $RPM_BUILD_ROOT%{bash_compdir}/fapolicyd{.bash_completion,}
 
+# no API exported
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/libfapolicyd.{a,la}
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -84,12 +87,15 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_sysconfdir}/fapolicyd
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/fapolicyd/fapolicyd.conf
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/fapolicyd/fapolicyd.trust
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/fapolicyd/fapolicyd-filter.conf
 %{_datadir}/fapolicyd
 %{systemdunitdir}/fapolicyd.service
 %{bash_compdir}/fapolicyd
-%{_mandir}/man1/fapolicyd-cli.1*
 %{_mandir}/man5/fapolicyd.conf.5*
 %{_mandir}/man5/fapolicyd.rules.5*
 %{_mandir}/man5/fapolicyd.trust.5*
+%{_mandir}/man5/fapolicyd-filter.conf.5*
+%{_mandir}/man5/rpm-filter.conf.5*
 %{_mandir}/man8/fagenrules.8*
 %{_mandir}/man8/fapolicyd.8*
+%{_mandir}/man8/fapolicyd-cli.8*
