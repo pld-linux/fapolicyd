@@ -1,0 +1,11 @@
+# PLD updater is poldek (librpm in-process), upstream rule covers only dnf
+--- fapolicyd-2.0.1.orig/rules.d/21-updaters.rules	2026-10-08 16:25:28.989501898 +0200
++++ fapolicyd-2.0.1/rules.d/21-updaters.rules	2026-10-08 16:25:29.169501898 +0200
+@@ -2,6 +2,6 @@
+ # or things go very bad (deadlock).
+ 
+ allow perm=open exe=/usr/bin/rpm : all
+-allow perm=open exe=%python3_path% comm=dnf : all
++allow perm=open exe=/usr/bin/poldek : all
+ 
+ 

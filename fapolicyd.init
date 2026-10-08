@@ -1,0 +1,102 @@
+#!/bin/sh
+#
+# fapolicyd	File Access Policy Daemon
+#
+# chkconfig:	2345 02 98
+# description:	fapolicyd decides file access rights based on a trust database \
+#		and a set of rules, using the kernel's fanotify interface.
+#
+# processname:	fapolicyd
+# config:	/etc/sysconfig/fapolicyd
+# config:	/etc/fapolicyd/fapolicyd.conf
+# pidfile:	/run/fapolicyd/fapolicyd.pid
+
+# Source function library
+. /etc/rc.d/init.d/functions
+
+# Get service config - may override defaults
+[ -f /etc/sysconfig/fapolicyd ] && . /etc/sysconfig/fapolicyd
+
+start() {
+	if [ -f /var/lock/subsys/fapolicyd ]; then
+		msg_already_running "File Access Policy Daemon"
+		return
+	fi
+
+	msg_starting "File Access Policy Daemon"
+	# the daemon hardcodes /run/fapolicyd for its pid file and fifo; /var/run is not /run on PLD
+	install -d -m 770 -o root -g fapolicyd /run/fapolicyd
+	/usr/sbin/fagenrules >/dev/null
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		daemon /usr/sbin/fapolicyd $FAPOLICYD_OPTIONS
+		RETVAL=$?
+	else
+		fail
+	fi
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/fapolicyd
+}
+
+stop() {
+	if [ ! -f /var/lock/subsys/fapolicyd ]; then
+		msg_not_running "File Access Policy Daemon"
+		return
+	fi
+
+	msg_stopping "File Access Policy Daemon"
+	killproc --pidfile /run/fapolicyd/fapolicyd.pid fapolicyd
+	rm -f /var/lock/subsys/fapolicyd >/dev/null 2>&1
+}
+
+condrestart() {
+	if [ ! -f /var/lock/subsys/fapolicyd ]; then
+		msg_not_running "File Access Policy Daemon"
+		RETVAL=$1
+		return
+	fi
+
+	stop
+	start
+}
+
+reload() {
+	if [ ! -f /var/lock/subsys/fapolicyd ]; then
+		msg_not_running "File Access Policy Daemon"
+		RETVAL=7
+		return
+	fi
+
+	# SIGHUP makes the daemon reload its rules and configuration
+	/usr/sbin/fagenrules --load
+	RETVAL=$?
+}
+
+RETVAL=0
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	stop
+	start
+	;;
+  try-restart)
+	condrestart 0
+	;;
+  reload|force-reload)
+	reload
+	;;
+  status)
+	status --pidfile /run/fapolicyd/fapolicyd.pid fapolicyd
+	RETVAL=$?
+	;;
+  *)
+	msg_usage "$0 {start|stop|restart|try-restart|reload|force-reload|status}"
+	exit 3
+esac
+
+exit $RETVAL
